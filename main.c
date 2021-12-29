@@ -2,16 +2,19 @@
 #define WIN32_LEAN_AND_MEAN // the purposes of these defines is to reduce unnecessary includes via windows.h
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <stdbool.h>
+
 #include <windows.h>
+#include <windowsx.h>
 #include <gl/glew.h> // used to load function pointers for OpenGL.
 #include <gl/wglew.h> // used for creating the modern OpenGL context.
 
-// we keep a couple of simple global variables for window size that is passed around and the state of the message loop.
-const int width = 1024;
-const int height = 728;
-bool running = true;
+#include "include/shader.h"
 
+const int width = 1600;
+const int height = 1200;
+bool running = true;
 HDC dc; // This tracks the "device context", a handle to the window.
 HGLRC rc; // Represents a handle to a OpenGL context (rendering context, not the same as device context).
 
@@ -42,6 +45,41 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
 
     ShowWindow(hwnd, nShowCmd);
 
+    SpirvData vertexShaderData = {0};
+    SpirvData fragmentShaderData = {0};
+    Shader shader;
+
+    if (!readBinaryFileIntoSpirvData("spirv/triangle_shader.vert.spv", &vertexShaderData));
+    if (!readBinaryFileIntoSpirvData("spirv/triangle_shader.frag.spv", &fragmentShaderData));
+
+    compileShaders(&shader, &vertexShaderData, &fragmentShaderData);
+
+    /********************************************************************************************************/
+
+    float vertices[] = {
+    //  x      y     z      r     g     b
+      -0.5f, -0.5f, 0.0f,  1.0f, 0.0f, 0.0f,
+       0.5f, -0.5f, 0.0f,  0.0f, 1.0f, 0.0f,
+       0.0f,  0.5f, 0.0f,  0.0f, 0.0f, 1.0f
+    };
+
+    unsigned int vbo, vao;
+    glCreateVertexArrays(1, &vao);
+
+    glCreateBuffers(1, &vbo);
+    glNamedBufferStorage(vbo, sizeof(vertices), vertices, GL_DYNAMIC_STORAGE_BIT);
+
+    glVertexArrayVertexBuffer(vao, 0, vbo, 0, 6 * sizeof(float));
+
+    glEnableVertexArrayAttrib(vao, 0);
+    glEnableVertexArrayAttrib(vao, 1);
+
+    glVertexArrayAttribFormat(vao, 0, 3, GL_FLOAT, false, 0);
+    glVertexArrayAttribFormat(vao, 1, 3, GL_FLOAT, false, 3 * sizeof(float));
+
+    glVertexArrayAttribBinding(vao, 0, 0);
+    glVertexArrayAttribBinding(vao, 1, 0);
+
     while (running) {
         MSG msg;
         while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) {
@@ -53,9 +91,13 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
         }
         glClearColor(0.92f, 0.58f, 0.39f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
+
+        glUseProgram(shader.program);
+        glBindVertexArray(vao);
+        glDrawArrays(GL_TRIANGLES, 0, 3);
+
         SwapBuffers(dc);
     }
-
 	return 0;
 }
 
@@ -109,7 +151,6 @@ BOOL createGLContext(HWND hwnd) {
         0
     };
 
-
     rc = wglCreateContextAttribsARB(dc, 0, attribs); // it is at this call you need to have a placeholder context created.
 
     wglMakeCurrent(NULL, NULL); // we can have a modern context, forget this one.
@@ -156,7 +197,10 @@ HWND createWindow(HINSTANCE instance, const wchar_t className[], int width, int 
 LRESULT CALLBACK windowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
     switch (message) {
         case WM_ACTIVATE: { // when the window is actived, create the context.
-            createGLContext(hwnd);
+            if (!createGLContext(hwnd)) {
+                MessageBoxA(hwnd, L"Failed to initialize OpenGL context", L"ERROR", 0);
+                PostQuitMessage(0);
+            }
         }
 
         case WM_CHAR: {
