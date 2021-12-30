@@ -7,6 +7,7 @@ It aims to just serve as a minimal refrence in how to get these aspects up and r
 ## Build
 This project uses the cmake build system. 
 ```
+run compile_shaders.bat
 cd ModernOpenGLWin32 
 mkdir build
 cd build

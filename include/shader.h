@@ -16,7 +16,7 @@ typedef struct {
 	GLuint program;
 } Shader;
 
-bool readBinaryFileIntoSpirvData(const char* filename, SpirvData* data) {
+static inline bool readBinaryFileIntoSpirvData(const char* filename, SpirvData* data) {
     FILE* handle;
     int result;
     fopen_s(&handle, filename, "rb");
