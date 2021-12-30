@@ -49,10 +49,19 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
     SpirvData fragmentShaderData = {0};
     Shader shader;
 
-    if (!readBinaryFileIntoSpirvData("spirv/triangle_shader.vert.spv", &vertexShaderData)) return -1;
-    if (!readBinaryFileIntoSpirvData("spirv/triangle_shader.frag.spv", &fragmentShaderData)) return -1;
+    if (!readBinaryFileIntoSpirvData("spirv/triangle_shader.vert.spv", &vertexShaderData)) {
+        MessageBoxA(0, "Unable to read vertex shader from file", "ERROR", 0);
+        return -1;
+    }
+    if (!readBinaryFileIntoSpirvData("spirv/triangle_shader.frag.spv", &fragmentShaderData)) {
+        MessageBoxA(0, "Unable to read fragment shader from file", "ERROR", 0);
+        return -1;
+    }
 
-    if (!compileShaders(&shader, &vertexShaderData, &fragmentShaderData)) return -1;
+    if (!compileShaders(&shader, &vertexShaderData, &fragmentShaderData)) {
+        MessageBoxA(0, "Unable to construct shader program", "ERROR", 0);
+        return -1;
+    }
 
     float vertices[] = {
     //  x      y     z      r     g     b

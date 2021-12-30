@@ -1,7 +1,6 @@
 #ifndef SHADER_H
 #define SHADER_H
 
-
 #include <gl/glew.h>
 #include <stdbool.h>
 
@@ -11,7 +10,7 @@ typedef struct {
 } SpirvData;
 
 // we do not keep a const char* to a vertex/fragment filepath so we can keep the function which reads the binary simpler.
-// if we kept them seperate, we would effectively have to double all the code in the function instead of just calling it twice
+// if we kept them seperate, we would effectively have to duplicate all the code in the function instead of just calling it twice
 // with a different name.
 typedef struct {
 	GLuint program;
@@ -72,7 +71,6 @@ static inline bool compileShaders(Shader* shader, SpirvData* vertexShaderData, S
     glShaderBinary(1, &fragmentShader, GL_SHADER_BINARY_FORMAT_SPIR_V, fragmentShaderData->buffer, fragmentShaderData->bufferLength);
     glSpecializeShader(fragmentShader, "main", NULL, NULL, NULL);
 
-    // Specialization is equivalent to compilation.
     glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &compile);
     if (compile == GL_FALSE) {
         FILE* outfile;
